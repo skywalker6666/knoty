@@ -10,12 +10,14 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@knoty/shared": "workspace:*",
     "@knoty/api-client": "workspace:*",
     "@knoty/graph-engine": "workspace:*",
+    "@knoty/shared": "workspace:*",
     "next": "16.1.6",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "undici": "^7.22.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

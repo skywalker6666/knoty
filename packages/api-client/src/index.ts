@@ -1,2 +1,2 @@
-export { createBrowserClient, createServerClient } from './client';
+export { createBrowserClient, createServerClient, createAdminClient } from './client';
 export type { CookieStore } from './client';

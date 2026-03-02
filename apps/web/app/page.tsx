@@ -1,103 +1,42 @@
-// ─── 圈子設定（顏色對應 CLAUDE.md：社團/班上/宿舍/打工）────────────────────
-const CIRCLES = [
-  {
-    id: '1',
-    name: '社團',
-    emoji: '🎭',
-    personCount: 12,
-    bg: 'bg-violet-100',
-    text: 'text-violet-700',
-    border: 'border-violet-200',
-    dot: 'bg-violet-500',
-  },
-  {
-    id: '2',
-    name: '班上',
-    emoji: '📚',
-    personCount: 28,
-    bg: 'bg-blue-100',
-    text: 'text-blue-700',
-    border: 'border-blue-200',
-    dot: 'bg-blue-500',
-  },
-  {
-    id: '3',
-    name: '宿舍',
-    emoji: '🏠',
-    personCount: 5,
-    bg: 'bg-amber-100',
-    text: 'text-amber-700',
-    border: 'border-amber-200',
-    dot: 'bg-amber-500',
-  },
-  {
-    id: '4',
-    name: '打工',
-    emoji: '💼',
-    personCount: 8,
-    bg: 'bg-emerald-100',
-    text: 'text-emerald-700',
-    border: 'border-emerald-200',
-    dot: 'bg-emerald-500',
-  },
-] as const;
+import { createAdminClient } from '@knoty/api-client';
 
-// ─── 事件 feed（mock，之後換成 Supabase 查詢）────────────────────────────────
-// event_type 對應 DB CHECK constraint：conflict|favor|betrayal|reconcile|milestone|note
-const MOCK_EVENTS = [
-  {
-    id: '1',
-    emoji: '🤝',
-    typeLabel: '幫助',
-    badgeBg: 'bg-emerald-100',
-    badgeText: 'text-emerald-700',
-    cardBg: 'bg-emerald-50',
-    cardBorder: 'border-emerald-100',
-    person: '學姐',
-    description: '在期末報告幫我補了一個大缺口，救了整組的分數',
-    impact: 3,
-    timeAgo: '2 小時前',
-  },
-  {
-    id: '2',
-    emoji: '⚔️',
-    typeLabel: '衝突',
-    badgeBg: 'bg-red-100',
-    badgeText: 'text-red-700',
-    cardBg: 'bg-red-50',
-    cardBorder: 'border-red-100',
-    person: '同學甲',
-    description: '社課討論時意見分歧，當著大家面槓上了，有點尷尬',
-    impact: -2,
-    timeAgo: '昨天',
-  },
-  {
-    id: '3',
-    emoji: '🏆',
-    typeLabel: '里程碑',
-    badgeBg: 'bg-amber-100',
-    badgeText: 'text-amber-700',
-    cardBg: 'bg-amber-50',
-    cardBorder: 'border-amber-100',
-    person: '學長',
-    description: '一起帶社團新生營，整體合作很順暢，互相補位',
-    impact: 2,
-    timeAgo: '3 天前',
-  },
-  {
-    id: '4',
-    emoji: '📝',
-    typeLabel: '備忘',
-    badgeBg: 'bg-zinc-100',
-    badgeText: 'text-zinc-600',
-    cardBg: 'bg-white',
-    cardBorder: 'border-zinc-100',
-    person: '室友',
-    description: '今天回家很晚，有點悶悶的，記得找個時機關心一下',
-    impact: 0,
-    timeAgo: '5 天前',
-  },
-] as const;
+// ─── Sprint 0 hardcoded user ─────────────────────────────────────────────────
+const HARDCODED_UID = 'd52cc5d3-f761-43aa-8575-8dd2cf60fe99';
+
+// ─── 圈子樣式 mapping ────────────────────────────────────────────────────────
+const CIRCLE_STYLES: Record<string, {
+  emoji: string; bg: string; text: string; border: string;
+}> = {
+  '社團':  { emoji: '🎭', bg: 'bg-violet-100', text: 'text-violet-700', border: 'border-violet-200' },
+  '班上':  { emoji: '📚', bg: 'bg-blue-100',   text: 'text-blue-700',   border: 'border-blue-200'   },
+  '宿舍':  { emoji: '🏠', bg: 'bg-amber-100',  text: 'text-amber-700',  border: 'border-amber-200'  },
+  '打工':  { emoji: '💼', bg: 'bg-emerald-100',text: 'text-emerald-700',border: 'border-emerald-200'},
+  '朋友圈':{ emoji: '🤝', bg: 'bg-pink-100',   text: 'text-pink-700',   border: 'border-pink-200'   },
+};
+const DEFAULT_CIRCLE_STYLE = { emoji: '⭕', bg: 'bg-zinc-100', text: 'text-zinc-700', border: 'border-zinc-200' };
+
+// ─── 事件樣式 mapping ────────────────────────────────────────────────────────
+const EVENT_STYLE: Record<string, {
+  emoji: string; typeLabel: string;
+  badgeBg: string; badgeText: string;
+  cardBg: string; cardBorder: string;
+}> = {
+  favor:     { emoji: '🤝', typeLabel: '幫助',   badgeBg: 'bg-emerald-100', badgeText: 'text-emerald-700', cardBg: 'bg-emerald-50', cardBorder: 'border-emerald-100' },
+  conflict:  { emoji: '⚔️', typeLabel: '衝突',   badgeBg: 'bg-red-100',     badgeText: 'text-red-700',     cardBg: 'bg-red-50',     cardBorder: 'border-red-100'     },
+  betrayal:  { emoji: '🗡️', typeLabel: '背刺',   badgeBg: 'bg-orange-100',  badgeText: 'text-orange-700',  cardBg: 'bg-orange-50',  cardBorder: 'border-orange-100'  },
+  reconcile: { emoji: '🕊️', typeLabel: '和解',   badgeBg: 'bg-sky-100',     badgeText: 'text-sky-700',     cardBg: 'bg-sky-50',     cardBorder: 'border-sky-100'     },
+  milestone: { emoji: '🏆', typeLabel: '里程碑', badgeBg: 'bg-amber-100',   badgeText: 'text-amber-700',   cardBg: 'bg-amber-50',   cardBorder: 'border-amber-100'   },
+  note:      { emoji: '📝', typeLabel: '備忘',   badgeBg: 'bg-zinc-100',    badgeText: 'text-zinc-600',    cardBg: 'bg-white',      cardBorder: 'border-zinc-100'    },
+};
+
+// ─── 時間相對顯示 ────────────────────────────────────────────────────────────
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const days = Math.floor(diff / 86400000);
+  if (days === 0) return '今天';
+  if (days === 1) return '昨天';
+  return `${days} 天前`;
+}
 
 // ─── Impact 顯示（-3..+3）───────────────────────────────────────────────────
 function ImpactBadge({ impact }: { impact: number }) {
@@ -115,7 +54,46 @@ function ImpactBadge({ impact }: { impact: number }) {
 }
 
 // ─── Page ───────────────────────────────────────────────────────────────────
-export default function HomePage() {
+export default async function HomePage() {
+  const supabase = createAdminClient();
+
+  // Task 2: Aggregate circles from persons
+  const { data: persons } = await supabase
+    .from('persons')
+    .select('circles')
+    .eq('user_id', HARDCODED_UID);
+
+  const circleCountMap = new Map<string, number>();
+  for (const p of persons ?? []) {
+    for (const c of (p.circles as string[]) ?? []) {
+      circleCountMap.set(c, (circleCountMap.get(c) ?? 0) + 1);
+    }
+  }
+
+  // Task 3: Fetch latest 5 events
+  const { data: events } = await supabase
+    .from('events')
+    .select('id, event_type, description, impact, occurred_at, involved_persons')
+    .eq('user_id', HARDCODED_UID)
+    .order('occurred_at', { ascending: false })
+    .limit(5);
+
+  // Batch-fetch person names for all involved persons
+  const allPersonIds = [...new Set(
+    (events ?? []).flatMap((e: { involved_persons: string[] }) => e.involved_persons),
+  )];
+
+  const { data: involvedPersons } = allPersonIds.length > 0
+    ? await supabase
+        .from('persons')
+        .select('id, display_name')
+        .in('id', allPersonIds)
+    : { data: [] as { id: string; display_name: string }[] };
+
+  const personNameMap = new Map(
+    (involvedPersons ?? []).map((p: { id: string; display_name: string }) => [p.id, p.display_name]),
+  );
+
   return (
     // pb-20：為固定底部 Tab Bar 留空間
     <main className="flex-1 pb-20">
@@ -147,20 +125,19 @@ export default function HomePage() {
 
           {/* 橫向捲動圈子卡片 */}
           <div className="flex gap-3 overflow-x-auto pb-1 -mx-4 px-4 scrollbar-hide">
-            {CIRCLES.map((circle) => (
-              <button
-                key={circle.id}
-                className={`flex-none flex flex-col items-center gap-1.5 px-4 py-3 rounded-2xl border ${circle.bg} ${circle.border} min-w-[80px] active:scale-95 transition-transform`}
-              >
-                <span className="text-2xl leading-none">{circle.emoji}</span>
-                <span className={`text-sm font-semibold ${circle.text}`}>
-                  {circle.name}
-                </span>
-                <span className="text-xs text-zinc-400 tabular-nums">
-                  {circle.personCount} 人
-                </span>
-              </button>
-            ))}
+            {[...circleCountMap.entries()].map(([name, count]) => {
+              const style = CIRCLE_STYLES[name] ?? DEFAULT_CIRCLE_STYLE;
+              return (
+                <button
+                  key={name}
+                  className={`flex-none flex flex-col items-center gap-1.5 px-4 py-3 rounded-2xl border ${style.bg} ${style.border} min-w-[80px] active:scale-95 transition-transform`}
+                >
+                  <span className="text-2xl leading-none">{style.emoji}</span>
+                  <span className={`text-sm font-semibold ${style.text}`}>{name}</span>
+                  <span className="text-xs text-zinc-400 tabular-nums">{count} 人</span>
+                </button>
+              );
+            })}
 
             {/* 新增圈子 */}
             <button className="flex-none flex flex-col items-center gap-1.5 px-4 py-3 rounded-2xl border border-dashed border-zinc-200 bg-white min-w-[80px] text-zinc-400 active:scale-95 transition-transform">
@@ -182,51 +159,39 @@ export default function HomePage() {
           </div>
 
           <div className="space-y-3">
-            {MOCK_EVENTS.map((event) => (
-              <div
-                key={event.id}
-                className={`rounded-2xl border p-4 ${event.cardBg} ${event.cardBorder}`}
-              >
-                <div className="flex items-start gap-3">
-                  {/* 事件 emoji */}
-                  <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center text-lg flex-shrink-0 shadow-sm">
-                    {event.emoji}
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    {/* 頂行：人名 + 類型標籤 + impact + 時間 */}
-                    <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <span className="font-semibold text-sm text-zinc-800">
-                        {event.person}
-                      </span>
-                      <span
-                        className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${event.badgeBg} ${event.badgeText}`}
-                      >
-                        {event.typeLabel}
-                      </span>
-                      <ImpactBadge impact={event.impact} />
-                      <span className="text-xs text-zinc-400 ml-auto">
-                        {event.timeAgo}
-                      </span>
+            {(events ?? []).map((event: {
+              id: string; event_type: string; description: string;
+              impact: number; occurred_at: string; involved_persons: string[];
+            }) => {
+              const style = EVENT_STYLE[event.event_type] ?? EVENT_STYLE['note'];
+              const names = event.involved_persons
+                .map((id: string) => personNameMap.get(id) ?? '某人')
+                .join('、');
+              return (
+                <div key={event.id} className={`rounded-2xl border p-4 ${style.cardBg} ${style.cardBorder}`}>
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center text-lg flex-shrink-0 shadow-sm">
+                      {style.emoji}
                     </div>
-
-                    {/* 事件描述 */}
-                    <p className="text-sm text-zinc-600 leading-snug line-clamp-2">
-                      {event.description}
-                    </p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <span className="font-semibold text-sm text-zinc-800">{names}</span>
+                        <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${style.badgeBg} ${style.badgeText}`}>
+                          {style.typeLabel}
+                        </span>
+                        <ImpactBadge impact={event.impact} />
+                        <span className="text-xs text-zinc-400 ml-auto">
+                          {timeAgo(event.occurred_at)}
+                        </span>
+                      </div>
+                      <p className="text-sm text-zinc-600 leading-snug line-clamp-2">{event.description}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
-
-        {/* ── 空白狀態提示（實際有資料後隱藏）── */}
-        <div className="rounded-2xl border border-dashed border-zinc-200 bg-white p-6 text-center">
-          <p className="text-zinc-400 text-sm leading-relaxed">
-            💡 連接 Supabase 後，這裡會顯示你的真實人際動態
-          </p>
-        </div>
 
       </div>
     </main>

@@ -3,6 +3,7 @@ import {
   createServerClient as supabaseServer,
   type CookieOptions,
 } from '@supabase/ssr';
+import { createClient } from '@supabase/supabase-js';
 
 const getEnv = (key: string): string => {
   const val = process.env[key];
@@ -54,5 +55,19 @@ export function createServerClient(cookieStore: CookieStore) {
         },
       },
     },
+  );
+}
+
+/**
+ * Server-only admin client — bypasses RLS via service_role key.
+ * Sprint 0 only. Replace with createServerClient() + session after auth is implemented.
+ *
+ * NEVER call this from Client Components or expose the key to the browser.
+ */
+export function createAdminClient() {
+  return createClient(
+    getEnv('NEXT_PUBLIC_SUPABASE_URL'),
+    getEnv('SUPABASE_SERVICE_ROLE_KEY'),
+    { auth: { autoRefreshToken: false, persistSession: false } },
   );
 }
