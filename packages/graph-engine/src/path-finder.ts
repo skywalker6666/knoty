@@ -1,5 +1,11 @@
 import type { Relationship, RelationDirection, Closeness } from '@knoty/shared';
 
+function flipDirection(dir: RelationDirection): RelationDirection {
+  if (dir === 'a_to_b') return 'b_to_a';
+  if (dir === 'b_to_a') return 'a_to_b';
+  return 'mutual';
+}
+
 // ── normalizeEdge ─────────────────────────────────────────────────────────────
 
 export interface NormalizedEdge {
@@ -22,11 +28,7 @@ export function normalizeEdge(
   if (from < to) {
     return { personA: from, personB: to, direction };
   }
-  const flipped: RelationDirection =
-    direction === 'a_to_b' ? 'b_to_a' :
-    direction === 'b_to_a' ? 'a_to_b' :
-    'mutual';
-  return { personA: to, personB: from, direction: flipped };
+  return { personA: to, personB: from, direction: flipDirection(direction) };
 }
 
 // ── buildAdjacencyList ────────────────────────────────────────────────────────
@@ -60,14 +62,10 @@ export function buildAdjacencyList(
 
     // personB → personA (flip direction for reverse traversal)
     if (!map.has(rel.personB)) map.set(rel.personB, []);
-    const flipped: RelationDirection =
-      rel.direction === 'a_to_b' ? 'b_to_a' :
-      rel.direction === 'b_to_a' ? 'a_to_b' :
-      'mutual';
     map.get(rel.personB)!.push({
       personId:  rel.personA,
       closeness: rel.closeness,
-      direction: flipped,
+      direction: flipDirection(rel.direction),
       context:   rel.context,
     });
   }
