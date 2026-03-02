@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd /d/alan_self/knoty && pnpm create next-app@latest apps/web --typescript --tailwind --app --no-src-dir --import-alias \"@/*\" --no-git --eslint --yes 2>&1)",
+      "Bash(cd /d/alan_self/knoty && pnpm --filter web typecheck 2>&1)",
+      "Bash(cd:*)"
+    ]
+  }
+}
