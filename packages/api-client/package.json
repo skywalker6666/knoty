@@ -1,0 +1,22 @@
+{
+  "name": "@knoty/api-client",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@knoty/shared":          "workspace:*",
+    "@supabase/supabase-js":  "^2.47.0",
+    "@supabase/ssr":          "^0.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript":  "^5.7.0"
+  }
+}
