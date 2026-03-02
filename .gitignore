@@ -1,0 +1,8 @@
+node_modules/
+.next/
+dist/
+.turbo/
+*.local
+.env
+.env.local
+.env.production
