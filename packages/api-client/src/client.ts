@@ -17,7 +17,7 @@ const getEnv = (key: string): string => {
 export function createBrowserClient() {
   return supabaseBrowser(
     getEnv('NEXT_PUBLIC_SUPABASE_URL'),
-    getEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY'),
+    getEnv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY'),
   );
 }
 
@@ -45,7 +45,7 @@ export interface CookieStore {
 export function createServerClient(cookieStore: CookieStore) {
   return supabaseServer(
     getEnv('NEXT_PUBLIC_SUPABASE_URL'),
-    getEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY'),
+    getEnv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY'),
     {
       cookies: {
         getAll() { return cookieStore.getAll(); },
