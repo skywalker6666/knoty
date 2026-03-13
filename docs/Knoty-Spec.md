@@ -138,17 +138,22 @@ Phase 4 (Month 12+)：B2B Team plan、擴展到日韓大學市場
 
 ### 3.2 技術棧
 
-| 層 | 選擇 | 理由 |
+| 層 | 選擇 | 備註 |
 |----|------|------|
-| 前端 | Next.js (App Router) + shadcn/ui | 統一技術棧、SSR + PWA（iOS 主要入口） |
-| Android App | React Native 或 Kotlin | NotificationListenerService 需原生能力 |
-| 圖譜視覺化 | D3.js or React Flow | 互動式節點拖拽、力導向佈局 |
-| API | Next.js API Routes | 輕量級，不需獨立 backend |
-| 資料庫 | PostgreSQL (Supabase) | 統一 DB 選型、adjacency list 夠用 |
-| Auth | Supabase Auth | 免費、整合方便 |
-| Calendar 整合 | Google Calendar API (OAuth 2.0) | 跨平台 cold start 補充方案 |
-| 通知分析 | Android NotificationListenerService | 主力 cold start 解法（Android only） |
-| 部署 | Vercel | 統一部署平台 |
+| Monorepo | Turborepo + pnpm workspaces | ✅ 已建立 |
+| 前端 | **Next.js 16 (App Router)** + TypeScript strict | ✅ 已建立，React 19 |
+| UI | Tailwind CSS v4 + shadcn/ui | ✅ 已整合 |
+| Android App | React Native（Android-first） | ⏳ Sprint 0 PoC 待驗證 |
+| 圖譜視覺化 | **D3.js** force-directed（已有 KnotyGraphV3.jsx 原型） | ⏳ Sprint 1 整合 |
+| API | Next.js API Routes | ✅ `/api/health`、`/api/risk-check` 已上線 |
+| 資料庫 | PostgreSQL via Supabase（adjacency list + recursive CTE） | ✅ schema + RLS + `find_relationship_paths()` 完成 |
+| Auth | Supabase Auth（Google + Email） | ⏳ Sprint 1（目前 Sprint 0 hardcoded UID） |
+| Validation | **Zod v4**（注意：`.uuid()` 強制 RFC 4122，DB ID 改用 format regex） | ✅ 已修正 |
+| Calendar 整合 | Google Calendar API (OAuth 2.0) | Phase 1 |
+| 通知分析 | Android NotificationListenerService | ⏳ Sprint 0 PoC 待驗證 |
+| 部署 | Vercel | ⏳ 待部署 |
+| LLM — 風險分析 | Claude Sonnet 4.6 | ⏳ Sprint 1（路徑查詢已通，AI 摘要待接） |
+| LLM — 事件解析 | Gemini Flash | ⏳ Sprint 1 |
 
 ### 3.3 平台策略：Android-First
 
@@ -366,17 +371,20 @@ interface Relationship {
 }
 
 // 社交風險查詢
+// POST /api/risk-check
 interface RiskCheckRequest {
-    aboutPerson: string;   // 我要聊到的人 C
-    talkingTo: string;     // 我要跟誰講 A
-    topic?: string;        // 可選：要聊什麼
+    from_id: string;   // 我要跟誰講（A）的 person UUID
+    to_id:   string;   // 我要聊到的人（C）的 person UUID
+    // topic 欄位保留給 Sprint 1 Claude AI 分析用
 }
 
 interface RiskCheckResponse {
-    riskLevel: 'safe' | 'caution' | 'danger';
-    paths: RelationPath[];         // A 和 C 之間的關係路徑
-    summary: string;               // AI 生成的風險摘要
-    suggestion: string;            // AI 建議（該不該聊、怎麼聊）
+    paths:     RelationPath[];  // A 和 C 之間的關係路徑（Sprint 0 已實作）
+    pathCount: number;
+    // Sprint 1 待實作（Claude Sonnet AI 分析）：
+    // riskLevel: 'safe' | 'caution' | 'danger';
+    // summary:    string;   // AI 生成的風險摘要
+    // suggestion: string;   // AI 建議（該不該聊、怎麼聊）
 }
 
 // 事件記錄
@@ -782,29 +790,62 @@ Knoty 幫你記錄和管理人際關係，避免社交踩雷。
 
 ## 10. 下一步行動
 
-### 10.1 Phase 0：技術驗證（如啟動）
+### 10.1 Phase 0：技術驗證（進行中）
+
+> **Sprint 0 Web 基礎建設（✅ 已完成）**
+>
+> 先建立 Web app 基礎，讓 Sprint 1 的 UI 功能可以快速接上。
+>
+> | 項目 | 狀態 |
+> |------|------|
+> | Turborepo + pnpm monorepo 骨架 | ✅ |
+> | Supabase schema（4 tables + RLS + index） | ✅ |
+> | `find_relationship_paths()` recursive CTE（bidirectional BFS） | ✅ |
+> | Seed 測試資料（8 人物、7 關係、6 事件、5 模板） | ✅ |
+> | `@knoty/api-client`（browser / server / admin client） | ✅ |
+> | `@knoty/shared` TypeScript 型別定義 | ✅ |
+> | `@knoty/graph-engine`（normalizeEdge、buildAdjacencyList + 測試） | ✅ |
+> | 首頁（真實 DB 資料：圈子列表 + 事件 feed） | ✅ |
+> | 風險查詢頁（選人 → 呼叫 `/api/risk-check` → 顯示路徑） | ✅ |
+> | `/api/health`、`/api/risk-check` API 路由 | ✅ |
+> | Bottom Tab Bar 導航 | ✅ |
+> | 企業 Proxy 支援（instrumentation.ts + undici ProxyAgent） | ✅ |
+> | 快速記錄頁 | ⏳（UI stub 已建，Gemini 解析 Sprint 1） |
+> | 圖譜視覺化（D3.js） | ⏳（Sprint 1） |
+
+> **Sprint 0 三大技術 PoC（⏳ 待驗證）**
 
 ```
-Week 1：
+PoC 1：NotificationListenerService + React Native Bridge
   - [ ] 建立 React Native 專案骨架（Android-first）
   - [ ] 實作 NotificationListenerService 整合
   - [ ] 通知解析 PoC：LINE / IG / Messenger 通知格式 parser
   - [ ] 驗證本地通知分析的可行性和準確度
+  - 目標：RN app 成功接收 LINE 通知事件並解析人名
+  - 失敗退出：改用 Kotlin Native 或重新評估 Android-first 策略
 
-Week 2：
-  - [ ] Supabase 資料庫 + persons / relationships CRUD
-  - [ ] 基礎圖譜視覺化（D3.js / React Native 適配）
-  - [ ] 通知分析 → 自動建圖 PoC（人物節點 + 群組共現推斷）
+PoC 2：D3.js 力導向圖譜手機效能
+  - [ ] 將 KnotyGraphV3.jsx 整合進 Next.js web app
+  - [ ] 在 Android 中低階機測試 30 個節點互動效能
+  - 目標：> 30fps
+  - 失敗退出：遷移到 Cytoscape.js（Canvas）或降級為列表視圖
 
-Week 3：
-  - [ ] 情境模板系統 + 三步引導流程
-  - [ ] Google Calendar 整合（跨平台方案）
-  - [ ] 社交風險分析 MVP（recursive CTE + Claude prompt）
+PoC 3：find_relationship_paths() 效能驗證
+  - [ ] 建立 200 節點的壓力測試資料集
+  - [ ] 測量查詢延遲
+  - 目標：< 100ms
+  - 失敗退出：加 materialized view 或 pre-compute 常用路徑
+  - 備注：函式已建立（bidirectional BFS，COALESCE user_id 參數化）
+```
 
-Week 4：
-  - [ ] PWA 基礎版（iOS 用戶入口）
-  - [ ] 10 位 beta tester 內測（優先找 Android 用戶）
-  - [ ] 根據回饋調整 onboarding 流程和通知解析準確度
+**Sprint 1 下一步（Web 功能）：**
+```
+  - [ ] Supabase Auth 接入（取代 hardcoded UID）
+  - [ ] Persons / Relationships CRUD API 路由
+  - [ ] D3.js 圖譜視覺化整合
+  - [ ] 快速記錄（Gemini Flash 事件解析）
+  - [ ] Claude Sonnet 風險分析文字（riskLevel + summary + suggestion）
+  - [ ] 情境模板 onboarding 三步引導流程
 ```
 
 ### 10.2 待決事項
@@ -819,13 +860,10 @@ Week 4：
 | 資料加密 | server-side only vs client-side E2E（通知資料敏感度高） | Phase 1 |
 | 多語系 | 繁中 only vs 繁中+英文 | Phase 2 |
 
-### 10.3 排入 Portfolio 的前提
+### 10.3 開發狀態
 
-此專案不建議立即啟動開發。建議在以下條件之一滿足後再排入：
-1. CardSense 達到 Phase 2（有穩定 MRR）
-2. 任一現有專案決定退出，釋放開發時間
-3. Alan 決定做策略性的專案數量縮減，Knoty 替換某個低優先級專案
+此專案已於 2026-03 正式啟動 Sprint 0 技術驗證。Web app 基礎建設已完成，進行中。
 
 ---
 
-*Owner: Alan | Created: 2026-02-27 | Status: V0.2 Spec, 未排入開發（綜合潛力 8.5/10）*
+*Owner: Alan | Created: 2026-02-27 | Updated: 2026-03-13 | Status: V0.3 — Sprint 0 進行中（Web 基礎建設完成，三大技術 PoC 待驗證）*
