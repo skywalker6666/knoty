@@ -37,3 +37,4 @@ export default function RecordPage() {
     </main>
   );
 }
+

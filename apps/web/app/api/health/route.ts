@@ -28,8 +28,11 @@ export async function GET() {
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
+    const cause = err instanceof Error && err.cause instanceof Error
+      ? err.cause.message
+      : String((err as { cause?: unknown } | null)?.cause ?? '');
     return NextResponse.json(
-      { ok: false, error: message },
+      { ok: false, error: message, cause },
       { status: 500 },
     );
   }

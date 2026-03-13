@@ -18,6 +18,8 @@ interface RiskAnalyzerProps {
 }
 
 export function RiskAnalyzer({ persons }: RiskAnalyzerProps) {
+  const personMap = new Map(persons.map(p => [p.id, p]));
+
   const [fromId, setFromId] = useState('');
   const [toId, setToId]     = useState('');
   const [result, setResult] = useState<PathResult[] | null>(null);
@@ -123,8 +125,20 @@ export function RiskAnalyzer({ persons }: RiskAnalyzerProps) {
                 <div className="text-xs text-violet-500 font-medium mb-1">
                   路徑 {i + 1}（{path.depth} 度）
                 </div>
-                <div className="text-sm text-zinc-700 font-mono">
-                  {Array.isArray(path.path) ? path.path.join(' → ') : JSON.stringify(path)}
+                <div className="text-sm text-zinc-700 flex flex-wrap items-center gap-1">
+                  {Array.isArray(path.path)
+                    ? path.path.map((id, j) => {
+                        const p = personMap.get(id);
+                        return (
+                          <span key={id} className="flex items-center gap-1">
+                            {j > 0 && <span className="text-zinc-400">→</span>}
+                            <span className="inline-flex items-center gap-1 bg-white border border-violet-200 rounded-full px-2 py-0.5">
+                              {p ? `${p.avatar_emoji} ${p.display_name}` : id}
+                            </span>
+                          </span>
+                        );
+                      })
+                    : JSON.stringify(path)}
                 </div>
               </div>
             ))
