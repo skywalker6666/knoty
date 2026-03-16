@@ -1,6 +1,6 @@
 # Graph Visualization Implementation Plan
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Implement a D3.js force-directed interactive graph visualization for `/graph` in `apps/web`, connecting to real Supabase data.
 
@@ -17,7 +17,7 @@
 **Files:**
 - Modify: `apps/web/package.json`
 
-- [ ] **Step 1: Install d3 and its types**
+- [x] **Step 1: Install d3 and its types**
 
 Run from repo root:
 ```bash
@@ -25,7 +25,7 @@ pnpm add d3 --filter web
 pnpm add -D @types/d3 --filter web
 ```
 
-- [ ] **Step 2: Verify install**
+- [x] **Step 2: Verify install**
 
 Run:
 ```bash
@@ -33,7 +33,7 @@ pnpm typecheck --filter web
 ```
 Expected: No errors (d3 types resolved)
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add apps/web/package.json pnpm-lock.yaml
@@ -49,7 +49,7 @@ Replace the current skeleton with proper DB-to-type mapping, error handling, and
 **Files:**
 - Modify: `apps/web/app/graph/page.tsx`
 
-- [ ] **Step 1: Replace the file**
+- [x] **Step 1: Replace the file**
 
 ```tsx
 // apps/web/app/graph/page.tsx
@@ -131,7 +131,7 @@ export default async function GraphPage() {
 }
 ```
 
-- [ ] **Step 2: Typecheck**
+- [x] **Step 2: Typecheck**
 
 ```bash
 pnpm typecheck --filter web
@@ -147,7 +147,7 @@ Create a non-crashing `GraphCanvas` that accepts props and renders a placeholder
 **Files:**
 - Create: `apps/web/components/graph/GraphCanvas.tsx`
 
-- [ ] **Step 1: Create the shell**
+- [x] **Step 1: Create the shell**
 
 ```tsx
 // apps/web/components/graph/GraphCanvas.tsx
@@ -178,21 +178,21 @@ export function GraphCanvas({ nodes, edges }: GraphCanvasProps) {
 }
 ```
 
-- [ ] **Step 2: Typecheck**
+- [x] **Step 2: Typecheck**
 
 ```bash
 pnpm typecheck --filter web
 ```
 Expected: PASS — zero errors
 
-- [ ] **Step 3: Smoke test in browser**
+- [x] **Step 3: Smoke test in browser**
 
 ```bash
 pnpm dev --filter web
 ```
 Open `http://localhost:3000/graph` — should see "N 個節點 · M 條邊（圖譜載入中）" or the empty state.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add apps/web/app/graph/page.tsx apps/web/components/graph/GraphCanvas.tsx
@@ -210,7 +210,7 @@ All D3 logic lives here. `GraphCanvas` and other components never import from `d
 **Files:**
 - Create: `apps/web/components/graph/use-graph-simulation.ts`
 
-- [ ] **Step 1: Create the hook**
+- [x] **Step 1: Create the hook**
 
 ```ts
 // apps/web/components/graph/use-graph-simulation.ts
@@ -315,14 +315,14 @@ export function useGraphSimulation(
 }
 ```
 
-- [ ] **Step 2: Typecheck**
+- [x] **Step 2: Typecheck**
 
 ```bash
 pnpm typecheck --filter web
 ```
 Expected: PASS
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add apps/web/components/graph/use-graph-simulation.ts
@@ -340,7 +340,7 @@ Renders a single SVG edge between two simulation nodes.
 **Files:**
 - Create: `apps/web/components/graph/GraphEdge.tsx`
 
-- [ ] **Step 1: Create the component**
+- [x] **Step 1: Create the component**
 
 ```tsx
 // apps/web/components/graph/GraphEdge.tsx
@@ -413,7 +413,7 @@ export function GraphEdgeComponent({ edge, isVisible, showLabel }: GraphEdgeProp
 }
 ```
 
-- [ ] **Step 2: Typecheck**
+- [x] **Step 2: Typecheck**
 
 ```bash
 pnpm typecheck --filter web
@@ -429,7 +429,7 @@ Renders a single SVG node with emoji, name label, circle colour ring, and pulse 
 **Files:**
 - Create: `apps/web/components/graph/GraphNode.tsx`
 
-- [ ] **Step 1: Create the component**
+- [x] **Step 1: Create the component**
 
 ```tsx
 // apps/web/components/graph/GraphNode.tsx
@@ -585,7 +585,7 @@ export function GraphNodeComponent({
 }
 ```
 
-- [ ] **Step 2: Typecheck**
+- [x] **Step 2: Typecheck**
 
 ```bash
 pnpm typecheck --filter web
@@ -601,7 +601,7 @@ Bottom slide-up panel showing selected node details and its relationships.
 **Files:**
 - Create: `apps/web/components/graph/GraphPanel.tsx`
 
-- [ ] **Step 1: Create the component**
+- [x] **Step 1: Create the component**
 
 ```tsx
 // apps/web/components/graph/GraphPanel.tsx
@@ -702,7 +702,7 @@ export function GraphPanel({ node, edges, allNodes, onClose }: GraphPanelProps) 
 }
 ```
 
-- [ ] **Step 2: Typecheck**
+- [x] **Step 2: Typecheck**
 
 ```bash
 pnpm typecheck --filter web
@@ -718,7 +718,7 @@ Three-button toggle: 單中心 / 多中心 / 團體.
 **Files:**
 - Create: `apps/web/components/graph/GraphModeToggle.tsx`
 
-- [ ] **Step 1: Create the component**
+- [x] **Step 1: Create the component**
 
 ```tsx
 // apps/web/components/graph/GraphModeToggle.tsx
@@ -758,14 +758,14 @@ export function GraphModeToggle({ mode, onChange }: GraphModeToggleProps) {
 }
 ```
 
-- [ ] **Step 2: Typecheck**
+- [x] **Step 2: Typecheck**
 
 ```bash
 pnpm typecheck --filter web
 ```
 Expected: PASS
 
-- [ ] **Step 3: Commit all SVG components**
+- [x] **Step 3: Commit all SVG components**
 
 ```bash
 git add apps/web/components/graph/GraphEdge.tsx
@@ -786,7 +786,7 @@ Wire simulation hook + SVG components together. Handle tap, long-press, drag, d3
 **Files:**
 - Modify: `apps/web/components/graph/GraphCanvas.tsx`
 
-- [ ] **Step 1: Replace GraphCanvas shell with full implementation**
+- [x] **Step 1: Replace GraphCanvas shell with full implementation**
 
 ```tsx
 // apps/web/components/graph/GraphCanvas.tsx
@@ -1045,14 +1045,14 @@ export function GraphCanvas({ nodes, edges, currentUserId }: GraphCanvasProps) {
 }
 ```
 
-- [ ] **Step 2: Typecheck**
+- [x] **Step 2: Typecheck**
 
 ```bash
 pnpm typecheck --filter web
 ```
 Expected: PASS — zero errors
 
-- [ ] **Step 3: Browser smoke test**
+- [x] **Step 3: Browser smoke test**
 
 ```bash
 pnpm dev --filter web
@@ -1066,7 +1066,7 @@ Open `http://localhost:3000/graph`:
 - Long-press a node → switches to multi-center mode
 - Toggle 單中心 / 多中心 / 團體 buttons work
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add apps/web/components/graph/GraphCanvas.tsx
@@ -1077,31 +1077,31 @@ git commit -m "feat: complete GraphCanvas with force simulation, all 3 modes, an
 
 ### Task 10: Final typecheck + cleanup
 
-- [ ] **Step 1: Full monorepo typecheck**
+- [x] **Step 1: Full monorepo typecheck**
 
 ```bash
 pnpm typecheck
 ```
 Expected: PASS across all packages
 
-- [ ] **Step 2: Remove old header mode buttons from graph/page.tsx**
+- [x] **Step 2: Remove old header mode buttons from graph/page.tsx**
 
 The header in the old `page.tsx` skeleton had hardcoded mode buttons. These are now rendered by `GraphModeToggle` inside `GraphCanvas`. Verify `page.tsx` no longer contains any mode toggle markup (it shouldn't after Task 2's rewrite — but double-check).
 
 Open `apps/web/app/graph/page.tsx` and confirm it only contains the Server Component data fetch + `<GraphCanvas>` render. No header, no buttons.
 
-- [ ] **Step 3: Sprint 0 validation checklist**
+- [x] **Step 3: Sprint 0 validation checklist**
 
 Manually verify on device or browser devtools mobile emulation (Android mid-range = Moto G equivalent, ~360px wide):
 
-- [ ] 30 nodes render without layout breaking
-- [ ] Simulation settles smoothly (no jank during first ~2s)
-- [ ] Tap/long-press/drag all respond within 100ms
-- [ ] Pinch zoom (two-finger) works in mobile emulation
-- [ ] All 3 mode switches work without crash
-- [ ] TypeScript strict: zero `any`, zero errors (`pnpm typecheck` passes)
+- [x] 30 nodes render without layout breaking
+- [x] Simulation settles smoothly (no jank during first ~2s)
+- [x] Tap/long-press/drag all respond within 100ms
+- [x] Pinch zoom (two-finger) works in mobile emulation
+- [x] All 3 mode switches work without crash
+- [x] TypeScript strict: zero `any`, zero errors (`pnpm typecheck` passes)
 
-- [ ] **Step 4: Final commit**
+- [x] **Step 4: Final commit**
 
 ```bash
 git add -p   # review staged changes
