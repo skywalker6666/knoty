@@ -36,6 +36,7 @@ export function GraphCanvas({ nodes, edges, currentUserId }: GraphCanvasProps) {
     moved: boolean;
   } | null>(null);
 
+  const wasMovedRef = useRef(false);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Measure container
@@ -84,7 +85,7 @@ export function GraphCanvas({ nodes, edges, currentUserId }: GraphCanvasProps) {
 
   // Wrap tap to filter out drag gestures (parent owns drag state)
   const handleTapIfNotDragged = useCallback((id: string) => {
-    if (dragRef.current?.moved) return;
+    if (wasMovedRef.current) return;
     setSelectedId(prev => prev === id ? null : id);
   }, []);
 
@@ -150,6 +151,8 @@ export function GraphCanvas({ nodes, edges, currentUserId }: GraphCanvasProps) {
   }, [simNodes, transform]);
 
   const handleSvgPointerUp = useCallback(() => {
+    // Read moved flag before clearing so tap handler can check it safely
+    wasMovedRef.current = dragRef.current?.moved ?? false;
     if (!dragRef.current) return;
     const { nodeId, moved } = dragRef.current;
     dragRef.current = null;

@@ -73,10 +73,11 @@ export function GraphNodeComponent({
     <g
       transform={`translate(${node.x ?? 0},${node.y ?? 0})`}
       style={{ cursor: 'pointer' }}
-      opacity={isFaded ? 0.2 : 1}
+      opacity={isFaded ? 0.3 : 1}
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerLeave}
+      onPointerCancel={handlePointerLeave}
     >
       {isCenter && (
         <circle r={r + 8} fill="none" stroke={circleColor} strokeWidth={2} opacity={0.5}>

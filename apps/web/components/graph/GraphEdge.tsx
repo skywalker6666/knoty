@@ -32,7 +32,7 @@ export function GraphEdgeComponent({ edge, isVisible, showLabel }: GraphEdgeProp
   const x2 = target.x ?? 0;
   const y2 = target.y ?? 0;
 
-  const style = CLOSENESS_STYLE[edge.closeness];
+  const style = CLOSENESS_STYLE[edge.closeness] ?? CLOSENESS_STYLE[3];
 
   return (
     <g opacity={isVisible ? 0.9 : 0.08}>

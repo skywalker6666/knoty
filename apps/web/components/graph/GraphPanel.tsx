@@ -1,6 +1,7 @@
 // apps/web/components/graph/GraphPanel.tsx
 'use client';
 
+import { useMemo } from 'react';
 import type { Closeness, GraphEdge, GraphNode } from '@knoty/shared';
 
 const CLOSENESS_LABEL: Record<Closeness, { tag: string; color: string }> = {
@@ -20,7 +21,7 @@ interface GraphPanelProps {
 }
 
 export function GraphPanel({ node, edges, allNodes, onClose }: GraphPanelProps) {
-  const nodeMap = new Map(allNodes.map(n => [n.id, n]));
+  const nodeMap = useMemo(() => new Map(allNodes.map(n => [n.id, n])), [allNodes]);
 
   // Find edges involving this node
   const relatedEdges = edges.filter(e => {
@@ -44,12 +45,12 @@ export function GraphPanel({ node, edges, allNodes, onClose }: GraphPanelProps) 
           <span className="text-2xl">{node.avatarEmoji ?? '🙂'}</span>
           <div>
             <span className="text-sm font-semibold text-[#e8e8f4]">{node.displayName}</span>
-            {primaryStyle && primaryEdge.label && (
+            {primaryStyle && (
               <span
                 className="ml-2 text-[10px] px-1.5 py-0.5 rounded-md"
                 style={{ background: primaryStyle.color + '20', color: primaryStyle.color }}
               >
-                {primaryStyle.tag} · {primaryEdge.label}
+                {primaryEdge.label ? `${primaryStyle.tag} · ${primaryEdge.label}` : primaryStyle.tag}
               </span>
             )}
           </div>
@@ -72,7 +73,7 @@ export function GraphPanel({ node, edges, allNodes, onClose }: GraphPanelProps) 
             const otherId = srcId === node.id ? tgtId : srcId;
             const other = nodeMap.get(otherId);
             if (!other) return null;
-            const s = CLOSENESS_LABEL[edge.closeness];
+            const s = CLOSENESS_LABEL[edge.closeness] ?? CLOSENESS_LABEL[3];
             const isRisk = edge.closeness <= 2;
             return (
               <span

@@ -89,7 +89,7 @@ export function useGraphSimulation(
   }, [
     // Stringify arrays so React detects deep changes
     JSON.stringify(nodes.map(n => n.id)),
-    JSON.stringify(edges.map(e => e.id)),
+    JSON.stringify(edges.map(e => `${e.id}:${e.closeness}`)),
     JSON.stringify(centerIds),
     mode,
     width,
