@@ -144,7 +144,7 @@ Phase 4 (Month 12+)：B2B Team plan、擴展到日韓大學市場
 | 前端 | **Next.js 16 (App Router)** + TypeScript strict | ✅ 已建立，React 19 |
 | UI | Tailwind CSS v4 + shadcn/ui | ✅ 已整合 |
 | Android App | React Native（Android-first） | ⏳ Sprint 0 PoC 待驗證 |
-| 圖譜視覺化 | **D3.js** force-directed（已有 KnotyGraphV3.jsx 原型） | ⏳ Sprint 1 整合 |
+| 圖譜視覺化 | **D3.js** force-directed（已有 KnotyGraphV3.jsx 原型） | ✅ Sprint 0 PoC 完成（單/多中心/團體模式 + 互動） |
 | API | Next.js API Routes | ✅ `/api/health`、`/api/risk-check` 已上線 |
 | 資料庫 | PostgreSQL via Supabase（adjacency list + recursive CTE） | ✅ schema + RLS + `find_relationship_paths()` 完成 |
 | Auth | Supabase Auth（Google + Email） | ⏳ Sprint 1（目前 Sprint 0 hardcoded UID） |
@@ -811,7 +811,7 @@ Knoty 幫你記錄和管理人際關係，避免社交踩雷。
 > | Bottom Tab Bar 導航 | ✅ |
 > | 企業 Proxy 支援（instrumentation.ts + undici ProxyAgent） | ✅ |
 > | 快速記錄頁 | ⏳（UI stub 已建，Gemini 解析 Sprint 1） |
-> | 圖譜視覺化（D3.js） | ⏳（Sprint 1） |
+> | 圖譜視覺化（D3.js） | ✅ 三模式 + 全互動（Sprint 0 完成） |
 
 > **Sprint 0 三大技術 PoC（⏳ 待驗證）**
 
