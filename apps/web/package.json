@@ -13,6 +13,7 @@
     "@knoty/api-client": "workspace:*",
     "@knoty/graph-engine": "workspace:*",
     "@knoty/shared": "workspace:*",
+    "d3": "^7.9.0",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
@@ -21,6 +22,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/d3": "^7.4.3",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
