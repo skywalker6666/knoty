@@ -1,73 +1,77 @@
+// apps/web/app/graph/page.tsx
 import { createAdminClient } from '@knoty/api-client';
+import type { GraphNode, GraphEdge } from '@knoty/shared';
+import { GraphCanvas } from '@/components/graph/GraphCanvas';
+
+// Sprint 0 placeholder — replace with createServerClient() + session in Sprint 1
+const HARDCODED_UID = 'd52cc5d3-f761-43aa-8575-8dd2cf60fe99';
 
 export default async function GraphPage() {
-  const HARDCODED_UID = 'd52cc5d3-f761-43aa-8575-8dd2cf60fe99';
   const supabase = createAdminClient();
 
-  const [{ data: persons }, { data: relationships }] = await Promise.all([
-    supabase
-      .from('persons')
-      .select('id, display_name, avatar_emoji, circles')
-      .eq('user_id', HARDCODED_UID),
-    supabase
-      .from('relationships')
-      .select('id, person_a, person_b, closeness, label, direction')
-      .eq('user_id', HARDCODED_UID),
-  ]);
+  try {
+    const [personsResult, relationshipsResult] = await Promise.all([
+      supabase
+        .from('persons')
+        .select('id, display_name, avatar_emoji, circles, tags')
+        .eq('user_id', HARDCODED_UID),
+      supabase
+        .from('relationships')
+        .select('id, person_a, person_b, closeness, label, direction, context')
+        .eq('user_id', HARDCODED_UID),
+    ]);
 
-  const nodeCount = persons?.length ?? 0;
-  const edgeCount = relationships?.length ?? 0;
+    if (personsResult.error) throw personsResult.error;
+    if (relationshipsResult.error) throw relationshipsResult.error;
 
-  return (
-    <main className="flex-1 pb-20">
-      <header className="sticky top-0 z-10 bg-white/95 backdrop-blur border-b border-zinc-100 px-4 py-3 flex items-center justify-between">
-        <h1 className="text-lg font-bold text-zinc-800">🕸️ 圖譜探索</h1>
-        {/* 模式切換 */}
-        <div className="flex gap-1 bg-zinc-100 rounded-lg p-1 text-xs font-medium">
-          <button className="px-2.5 py-1 bg-white rounded-md shadow-sm text-zinc-700">
-            單中心
-          </button>
-          <button className="px-2.5 py-1 text-zinc-400">
-            多中心
-          </button>
-          <button className="px-2.5 py-1 text-zinc-400">
-            團體
-          </button>
-        </div>
-      </header>
+    // Map DB snake_case → GraphNode (camelCase, per types.ts)
+    const nodes: GraphNode[] = (personsResult.data ?? []).map(p => ({
+      id: p.id,
+      displayName: p.display_name,
+      avatarEmoji: p.avatar_emoji ?? undefined,
+      circles: (p.circles as string[]) ?? [],
+      tags: (p.tags as string[]) ?? [],
+    }));
 
-      {/* Sprint 0 DB 驗證統計 */}
-      <div className="mx-4 mt-3 p-3 rounded-xl bg-violet-50 border border-violet-100 flex items-center gap-6">
-        <div className="text-center flex-1">
-          <div className="text-2xl font-bold text-violet-700">{nodeCount}</div>
-          <div className="text-xs text-zinc-500">人物節點</div>
-        </div>
-        <div className="w-px h-8 bg-violet-200" />
-        <div className="text-center flex-1">
-          <div className="text-2xl font-bold text-violet-700">{edgeCount}</div>
-          <div className="text-xs text-zinc-500">關係邊</div>
-        </div>
-        <div className="w-px h-8 bg-violet-200" />
-        <div className="text-center flex-1">
-          <div className="text-xs text-zinc-400">D3 圖譜</div>
-          <div className="text-xs text-violet-600 font-medium">Sprint 1</div>
-        </div>
-      </div>
+    // Map DB snake_case → GraphEdge (source/target, per types.ts)
+    const edges: GraphEdge[] = (relationshipsResult.data ?? []).map(r => ({
+      id: r.id,
+      source: r.person_a,   // D3 resolves string IDs to node refs during sim init
+      target: r.person_b,
+      closeness: r.closeness,
+      direction: r.direction,
+      label: r.label ?? undefined,
+      context: r.context ?? undefined,
+    }));
 
-      {/* 節點列表 — Sprint 1 換成 D3 canvas */}
-      <div className="mx-4 mt-4 space-y-2 pb-4">
-        {(persons ?? []).map((p: {
-          id: string; display_name: string; avatar_emoji: string; circles: string[];
-        }) => (
-          <div key={p.id} className="flex items-center gap-3 p-3 rounded-xl bg-white border border-zinc-100">
-            <span className="text-xl">{p.avatar_emoji}</span>
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-semibold text-zinc-800">{p.display_name}</div>
-              <div className="text-xs text-zinc-400">{(p.circles ?? []).join('・')}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </main>
-  );
+    // Inject synthetic "me" node as the ego centre
+    const meNode: GraphNode = {
+      id: HARDCODED_UID,
+      displayName: '我',
+      avatarEmoji: '🧑',
+      circles: [],
+      tags: [],
+    };
+    // Prepend only if not already in the DB (in case user saved themselves)
+    if (!nodes.some(n => n.id === HARDCODED_UID)) {
+      nodes.unshift(meNode);
+    }
+
+    return (
+      <main className="flex-1 flex flex-col h-[calc(100vh-4rem)] pb-20">
+        <GraphCanvas
+          nodes={nodes}
+          edges={edges}
+          currentUserId={HARDCODED_UID}
+        />
+      </main>
+    );
+  } catch (err) {
+    console.error('[GraphPage] fetch error:', err);
+    return (
+      <main className="flex-1 flex flex-col h-[calc(100vh-4rem)] pb-20">
+        <GraphCanvas nodes={[]} edges={[]} currentUserId={HARDCODED_UID} />
+      </main>
+    );
+  }
 }
