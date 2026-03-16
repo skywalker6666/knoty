@@ -44,10 +44,8 @@ export function GraphNodeComponent({
     : (CIRCLE_COLOR[node.circles[0] ?? ''] ?? '#3a3a55');
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const didDragRef = useRef(false);
 
   const handlePointerDown = (e: React.PointerEvent<SVGGElement>) => {
-    didDragRef.current = false;
     // Notify parent so it can start tracking pointer for drag
     onDragStart(node.id, e);
     timerRef.current = setTimeout(() => {
@@ -57,7 +55,7 @@ export function GraphNodeComponent({
   };
 
   const handlePointerUp = () => {
-    if (timerRef.current && !didDragRef.current) {
+    if (timerRef.current) {
       clearTimeout(timerRef.current);
       timerRef.current = null;
       onTap(node.id);

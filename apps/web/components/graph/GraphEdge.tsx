@@ -22,9 +22,11 @@ interface GraphEdgeProps {
 }
 
 export function GraphEdgeComponent({ edge, isVisible, showLabel }: GraphEdgeProps) {
-  // After D3 sim init, source/target are resolved to node objects
-  const source = edge.source as GraphNode;
-  const target = edge.target as GraphNode;
+  // D3 resolves string IDs to node objects after first simulation tick
+  if (typeof edge.source === 'string' || typeof edge.target === 'string') return null;
+
+  const source = edge.source;
+  const target = edge.target;
   const x1 = source.x ?? 0;
   const y1 = source.y ?? 0;
   const x2 = target.x ?? 0;

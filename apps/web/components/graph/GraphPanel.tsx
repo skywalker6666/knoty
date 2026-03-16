@@ -29,7 +29,7 @@ export function GraphPanel({ node, edges, allNodes, onClose }: GraphPanelProps) 
     return srcId === node.id || tgtId === node.id;
   }).sort((a, b) => b.closeness - a.closeness);
 
-  // Direct edge from me → this node (for closeness badge in header)
+  // Highest-closeness edge involving this node (shown in header badge)
   const primaryEdge = relatedEdges[0];
   const primaryStyle = primaryEdge ? CLOSENESS_LABEL[primaryEdge.closeness] : null;
 
@@ -55,6 +55,7 @@ export function GraphPanel({ node, edges, allNodes, onClose }: GraphPanelProps) 
           </div>
         </div>
         <button
+          type="button"
           onClick={onClose}
           className="border border-[#1e1e2e] text-[#7a7a99] text-xs px-2 py-1 rounded-md bg-transparent"
         >

@@ -20,6 +20,7 @@ export function GraphModeToggle({ mode, onChange }: GraphModeToggleProps) {
       {MODES.map(m => (
         <button
           key={m.value}
+          type="button"
           onClick={() => onChange(m.value)}
           className={`px-2.5 py-1 rounded-md transition-colors ${
             mode === m.value

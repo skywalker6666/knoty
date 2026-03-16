@@ -1,9 +1,8 @@
 // apps/web/components/graph/GraphCanvas.tsx
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { select } from 'd3';
-import { zoom as d3zoom, zoomIdentity, type ZoomTransform } from 'd3';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { select, zoom as d3zoom, zoomIdentity, type ZoomTransform } from 'd3';
 import type { GraphNode, GraphEdge } from '@knoty/shared';
 import { useGraphSimulation, type GraphMode } from './use-graph-simulation';
 import { GraphNodeComponent } from './GraphNode';
@@ -37,6 +36,8 @@ export function GraphCanvas({ nodes, edges, currentUserId }: GraphCanvasProps) {
     moved: boolean;
   } | null>(null);
 
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Measure container
   useEffect(() => {
     if (!containerRef.current) return;
@@ -46,6 +47,12 @@ export function GraphCanvas({ nodes, edges, currentUserId }: GraphCanvasProps) {
     });
     observer.observe(containerRef.current);
     return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    };
   }, []);
 
   // d3-zoom on SVG viewport (scroll / pinch to zoom, drag on empty area to pan)
@@ -75,7 +82,9 @@ export function GraphCanvas({ nodes, edges, currentUserId }: GraphCanvasProps) {
 
   // ── Interactions ─────────────────────────────────────────────────────────
 
-  const handleTap = useCallback((id: string) => {
+  // Wrap tap to filter out drag gestures (parent owns drag state)
+  const handleTapIfNotDragged = useCallback((id: string) => {
+    if (dragRef.current?.moved) return;
     setSelectedId(prev => prev === id ? null : id);
   }, []);
 
@@ -90,8 +99,9 @@ export function GraphCanvas({ nodes, edges, currentUserId }: GraphCanvasProps) {
     setCenterIds(prev => {
       if (prev.includes(id)) return prev.filter(x => x !== id);
       if (prev.length >= 3) {
+        if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
         setToast('最多 3 個中心節點');
-        setTimeout(() => setToast(null), 1500);
+        toastTimerRef.current = setTimeout(() => setToast(null), 1500);
         return prev;
       }
       return [...prev, id];
@@ -154,16 +164,19 @@ export function GraphCanvas({ nodes, edges, currentUserId }: GraphCanvasProps) {
 
   // ── Derived state ─────────────────────────────────────────────────────────
 
-  const connectedToSelected = new Set<string>();
-  if (selectedId) {
-    connectedToSelected.add(selectedId);
-    for (const edge of simEdges) {
-      const src = typeof edge.source === 'string' ? edge.source : edge.source.id;
-      const tgt = typeof edge.target === 'string' ? edge.target : edge.target.id;
-      if (src === selectedId) connectedToSelected.add(tgt);
-      if (tgt === selectedId) connectedToSelected.add(src);
+  const connectedToSelected = useMemo(() => {
+    const set = new Set<string>();
+    if (selectedId) {
+      set.add(selectedId);
+      for (const edge of simEdges) {
+        const src = typeof edge.source === 'string' ? edge.source : edge.source.id;
+        const tgt = typeof edge.target === 'string' ? edge.target : edge.target.id;
+        if (src === selectedId) set.add(tgt);
+        if (tgt === selectedId) set.add(src);
+      }
     }
-  }
+    return set;
+  }, [selectedId, simEdges]);
 
   const selectedNode = selectedId
     ? (simNodes.find(n => n.id === selectedId) ?? null)
@@ -194,6 +207,7 @@ export function GraphCanvas({ nodes, edges, currentUserId }: GraphCanvasProps) {
         onClick={() => setSelectedId(null)}
         onPointerMove={handleSvgPointerMove}
         onPointerUp={handleSvgPointerUp}
+        onPointerCancel={handleSvgPointerUp}
       >
         <g transform={transform.toString()}>
           {/* Edges behind nodes */}
@@ -225,7 +239,7 @@ export function GraphCanvas({ nodes, edges, currentUserId }: GraphCanvasProps) {
                   centerIndex={centerIndex}
                   isActive={isActive}
                   isFaded={isFaded}
-                  onTap={handleTap}
+                  onTap={handleTapIfNotDragged}
                   onLongPress={handleLongPress}
                   onDragStart={handleDragStart}
                 />
