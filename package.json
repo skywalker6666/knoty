@@ -10,6 +10,9 @@
     "test": "turbo test",
     "perf": "tsx scripts/perf-test.ts"
   },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.47.0"
+  },
   "devDependencies": {
     "@types/node": "^25.5.0",
     "dotenv": "^17.3.1",
