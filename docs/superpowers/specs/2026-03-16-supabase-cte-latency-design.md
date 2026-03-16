@@ -66,6 +66,7 @@ All perf data uses a fixed `PERF_USER_ID` UUID that does not exist in `auth.user
 knoty/
 ├── supabase/
 │   ├── perf_seed.sql          ← generates 200 nodes + ~500 edges
+│   ├── perf_benchmark.sql     ← EXPLAIN ANALYZE queries for DB internal timing
 │   └── perf_cleanup.sql       ← deletes all perf data
 ├── scripts/
 │   ├── perf-test.ts           ← RTT benchmark (5 runs/case, median)
