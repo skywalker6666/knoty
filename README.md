@@ -88,7 +88,7 @@ npx supabase db reset
 |-----|------|------|
 | D3.js 力導向圖譜手機效能 | 30 節點 Android 中低階機 > 30fps，三模式互動 | ✅ 完成 |
 | NotificationListenerService + RN bridge | LINE 通知解析人名 | 待驗證 |
-| Supabase recursive CTE 查詢延遲 | `find_relationship_paths()` 200 節點 < 100ms | 待驗證 |
+| Supabase recursive CTE 查詢延遲 | `find_relationship_paths()` 200 節點 < 100ms | ✅ 完成（0.16ms DB-internal，200 節點 depth 3） |
 
 ---
 
