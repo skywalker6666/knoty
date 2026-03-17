@@ -102,6 +102,25 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 ```
 GET  /api/persons              → list all persons for authenticated user
 POST /api/persons              → create person
+```
+
+**GET /api/persons list response schema:**
+```typescript
+{
+  persons: {
+    id: string,
+    display_name: string,
+    avatar_emoji: string | null,
+    circles: string[],
+    tags: string[],
+    notes: string | null,
+    created_at: string,
+    updated_at: string,
+  }[]
+}
+```
+
+```
 
 GET    /api/persons/[id]       → single person with relationships
 PATCH  /api/persons/[id]       → update fields
@@ -111,11 +130,44 @@ DELETE /api/persons/[id]       → hard delete (cascades relationships via FK)
 **POST /api/persons request schema (Zod):**
 ```typescript
 {
-  nickname: string,         // required, max 50 chars
-  circle_id?: string,       // uuid of circle_template
-  closeness?: number,       // 1–5, default 3
+  display_name: string,     // required, max 100 chars (DB column name)
+  avatar_emoji?: string,    // single emoji, max 10 chars
+  circles?: string[],       // circle names, e.g. ["社團", "班上"] — maps to DB circles TEXT[]
+  tags?: string[],          // custom tags, e.g. ["值得信任"]
   notes?: string,           // max 500 chars
 }
+```
+
+**GET /api/persons/[id] response schema:**
+```typescript
+{
+  id: string,
+  display_name: string,
+  avatar_emoji: string | null,
+  circles: string[],
+  tags: string[],
+  notes: string | null,
+  created_at: string,
+  updated_at: string,
+  relationships: {          // embedded, from relationships table
+    id: string,
+    other_person_id: string,
+    other_person_name: string,
+    closeness: number,
+    label: string | null,
+    direction: "mutual" | "a_to_b" | "b_to_a",
+  }[]
+}
+```
+
+**DELETE /api/persons/[id] — orphaned events note:**
+Deleting a person cascades to `relationships` (FK ON DELETE CASCADE). However, `events.involved_persons` is a `UUID[]` array column with no FK — the deleted UUID will remain in existing events rows. The DELETE handler must additionally run:
+```sql
+UPDATE events
+SET involved_persons = array_remove(involved_persons, $personId::uuid)
+WHERE user_id = $userId AND $personId::uuid = ANY(involved_persons);
+-- Then delete events left with empty involved_persons array:
+DELETE FROM events WHERE user_id = $userId AND array_length(involved_persons, 1) IS NULL;
 ```
 
 ### Relationships
@@ -123,29 +175,71 @@ DELETE /api/persons/[id]       → hard delete (cascades relationships via FK)
 ```
 GET  /api/relationships           → list, optional ?person_id= filter
 POST /api/relationships           → create
+```
 
-PATCH  /api/relationships/[id]    → update closeness / relation_type / direction
+**GET /api/relationships list response schema:**
+```typescript
+{
+  relationships: {
+    id: string,
+    person_a: string,        // UUID
+    person_b: string,        // UUID
+    closeness: number,
+    label: string | null,
+    direction: "mutual" | "a_to_b" | "b_to_a",
+    context: string | null,
+    notes: string | null,
+    created_at: string,
+    updated_at: string,
+  }[]
+}
+```
+
+```
+
+PATCH  /api/relationships/[id]    → update closeness / label / direction
 DELETE /api/relationships/[id]    → delete
 ```
 
 **POST /api/relationships request schema (Zod):**
 ```typescript
 {
-  person_a_id: string,      // uuid — app layer sorts a < b before sending
-  person_b_id: string,      // uuid
+  person_a: string,         // uuid — DB column name is person_a (no _id suffix)
+  person_b: string,         // uuid — DB column name is person_b
   closeness?: number,       // 1–5, default 3
-  relation_type?: string,   // max 50 chars
+  label?: string,           // DB column is `label`, max 50 chars (e.g. "同盟", "競爭")
   direction?: "mutual" | "a_to_b" | "b_to_a",  // default "mutual"
+  context?: string,         // circle context e.g. "職場", max 50 chars
 }
 ```
 
 Server enforces `person_a < person_b` ordering (lexicographic UUID comparison) regardless of client input.
+
+**PATCH /api/relationships/[id] updatable fields:** `closeness`, `label`, `direction`, `context`, `notes`
 
 ### Events
 
 ```
 GET  /api/events               → list, optional ?person_id= filter, default latest 20
 POST /api/events               → create
+```
+
+**GET /api/events list response schema:**
+```typescript
+{
+  events: {
+    id: string,
+    involved_persons: string[],    // UUID[] — DB column name
+    event_type: string,
+    description: string,
+    impact: number,
+    occurred_at: string,           // DATE as ISO string
+    created_at: string,
+  }[]
+}
+```
+
+```
 
 PATCH  /api/events/[id]        → update
 DELETE /api/events/[id]        → delete
@@ -154,13 +248,15 @@ DELETE /api/events/[id]        → delete
 **POST /api/events request schema (Zod):**
 ```typescript
 {
-  involved_person_ids: string[],   // uuid[]
+  involved_person_ids: string[],   // request alias — server maps to DB column `involved_persons UUID[]`
   event_type: "conflict" | "favor" | "betrayal" | "reconcile" | "milestone" | "note",
   description: string,             // max 500 chars
   impact: number,                  // -3 to +3
-  occurred_at?: string,            // ISO 8601, default now()
+  occurred_at?: string,            // ISO 8601 date string, default today; server converts to DATE
 }
 ```
+
+**Note on events.updated_at:** The `events` table has no `updated_at` column (unlike `persons` and `relationships`). `PATCH /api/events/[id]` is still valid — rows can be updated. The PATCH response simply omits `updated_at`. Do not add `updated_at` to the response schema.
 
 ### CRUD UI
 
@@ -197,7 +293,7 @@ Once onboarding is complete (any persons exist), this route is no longer trigger
 - Based on selected templates, show suggested person placeholders (e.g. 「室友1、室友2、室友3」)
 - Each row: nickname input field + delete button
 - Add row button for extra persons
-- Only field required: nickname (max 50 chars)
+- Only field required: nickname (max 100 chars — matches `display_name VARCHAR(100)` DB constraint)
 - CTA: 「下一步」(disabled until ≥1 person with non-empty nickname)
 
 ### Step 3 — Set Relationship Strength
@@ -212,15 +308,23 @@ Once onboarding is complete (any persons exist), this route is no longer trigger
 ```
 GET /api/templates
 → system templates (is_system = true) + user's custom templates
-→ [{ id, name, description, suggested_persons: string[], default_pairs: [idx, idx][] }]
+→ Response: [{
+     id: string,
+     name: string,
+     description: string | null,
+     preset_roles: string[],   // DB column name — role suggestions e.g. ["室友1", "室友2"]
+     preset_labels: string[],  // DB column name — relationship labels e.g. ["同盟", "競爭"]
+   }]
 ```
+
+The frontend derives `suggested_persons` from `preset_roles` (use as placeholder nicknames in Step 2) and `default_pairs` from adjacent pairs in `preset_roles` (each consecutive pair gets a default relationship with `label` from `preset_labels[0]`).
 
 ### `/api/onboarding` Endpoint
 
 ```typescript
 // POST — Zod validated
 {
-  persons: { nickname: string, circle_id?: string }[],
+  persons: { display_name: string, circles?: string[] }[],  // display_name maps to DB column
   relationships: {
     person_a_idx: number,   // index into persons array
     person_b_idx: number,
@@ -253,7 +357,7 @@ GET /api/templates
 // Response:
 {
   involved_persons: string[],     // nicknames, fuzzy-matched against user's DB persons
-  matched_person_ids: string[],   // resolved UUIDs (null entry if no match)
+  matched_person_ids: (string | null)[],  // resolved UUIDs; null if no DB match found
   event_type: "conflict" | "favor" | "betrayal" | "reconcile" | "milestone" | "note",
   description: string,
   impact: number,                  // -3 to +3
@@ -267,7 +371,7 @@ GET /api/templates
 - Output must be valid JSON matching the schema above
 
 **Person matching:**
-- Server does `WHERE nickname ILIKE '%<name>%' AND user_id = uid` for each extracted name
+- Server does `WHERE display_name ILIKE '%<name>%' AND user_id = uid` for each extracted name (DB column is `display_name`, not `nickname`)
 - Unmatched names returned as-is with `matched_person_ids[i] = null`
 
 **Environment variable:** `GEMINI_API_KEY` (server-side only)
@@ -289,6 +393,8 @@ GET /api/templates
 ### Existing Foundation
 
 `/api/risk-check` already calls `find_relationship_paths()` and returns path data. Sprint 1 adds a Claude Sonnet call after path retrieval.
+
+**Critical migration required:** The current `route.ts` uses `createAdminClient` (service_role key, bypasses RLS) with a hardcoded UID. Sprint 1 must switch to `createServerClient` (anon key + cookies) so that `auth.uid()` resolves correctly inside the CTE's `WHERE user_id = auth.uid()` clause. Replacing only the UID without swapping the client type will silently return all users' data.
 
 ### Updated Response Schema
 
@@ -312,14 +418,32 @@ GET /api/templates
 
 ### Usage Limit
 
-New table: `ai_usage`
+New table defined in migration `002_ai_usage.sql`:
+
 ```sql
+-- UP
 CREATE TABLE ai_usage (
-  user_id  uuid REFERENCES auth.users NOT NULL,
+  user_id  uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   month    char(7) NOT NULL,   -- 'YYYY-MM'
-  count    integer DEFAULT 0,
+  count    integer NOT NULL DEFAULT 0,
   PRIMARY KEY (user_id, month)
 );
+
+ALTER TABLE ai_usage ENABLE ROW LEVEL SECURITY;
+
+-- Users can only read/write their own usage rows
+CREATE POLICY ai_usage_select ON ai_usage
+  FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY ai_usage_insert ON ai_usage
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY ai_usage_update ON ai_usage
+  FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+-- No DELETE policy: usage rows are append-only; users cannot delete their own usage history
+-- (prevents gaming the monthly quota by deleting rows)
+
+-- DOWN
+-- DROP TABLE IF EXISTS ai_usage CASCADE;
 ```
 
 Logic:
