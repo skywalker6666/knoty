@@ -32,7 +32,7 @@ export type EventType =
 export type Impact = -3 | -2 | -1 | 0 | 1 | 2 | 3;
 
 /** 社交風險等級（AI 分析輸出） */
-export type RiskLevel = 'safe' | 'caution' | 'danger';
+export type RiskLevel = 'low' | 'medium' | 'high';
 
 // ============================================================
 // DB Entity Interfaces
@@ -187,23 +187,33 @@ export interface RelationPath {
 
 /** 社交風險查詢請求（POST /api/risk-check） */
 export interface RiskCheckRequest {
-  /** 我要跟誰講 → person A ID */
-  talkingTo: string;
-  /** 我要聊到的人 → person C ID */
-  aboutPerson: string;
-  /** 可選：要聊什麼話題 */
-  topic?: string;
+  from_id: string;   // person UUID — 我要跟誰講
+  to_id: string;     // person UUID — 我要聊到的人
 }
 
-/** 社交風險查詢回應（Spec §4.3） */
-export interface RiskCheckResponse {
+/** AI summary returned by Claude in /api/risk-check */
+export interface AiSummary {
   riskLevel: RiskLevel;
-  /** A → C 之間的所有路徑（最多 3 度，由 find_relationship_paths() 回傳） */
+  summary: string;     // ≤ 150 chars, 繁體中文
+  suggestion: string;  // ≤ 150 chars, 繁體中文
+}
+
+/** 社交風險查詢回應（POST /api/risk-check） */
+export interface RiskCheckResponse {
   paths: RelationPath[];
-  /** AI 生成的風險摘要，繁體中文，300 字以內 */
-  summary: string;
-  /** AI 建議：該不該聊、怎麼聊 */
-  suggestion: string;
+  pathCount: number;
+  ai: AiSummary | null;
+  aiLimitReached?: boolean;
+}
+
+/** Response from POST /api/events/parse */
+export interface ParseEventResponse {
+  involved_persons: string[];
+  matched_person_ids: (string | null)[];
+  event_type: EventType;
+  description: string;
+  impact: Impact;
+  occurred_at: string;  // ISO 8601 date string
 }
 
 // ============================================================
