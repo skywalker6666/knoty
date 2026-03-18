@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createAdminClient } from '@knoty/api-client';
-
-// Sprint 0: no auth yet — hardcoded test user UID.
-// Replace with session.user.id once Supabase Auth is wired up.
-const HARDCODED_UID = 'd52cc5d3-f761-43aa-8575-8dd2cf60fe99';
+import { createRouteClient, getAuthUser } from '@/lib/supabase-server';
 
 // z.string().uuid() in Zod v4 enforces strict RFC 4122 version/variant bits.
 // Seed data uses non-RFC-4122 UUIDs (e.g. b0000001-...), so we validate
@@ -18,6 +14,15 @@ const RequestSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  const supabase = await createRouteClient();
+  const user = await getAuthUser(supabase);
+  if (!user) {
+    return NextResponse.json(
+      { error: 'Unauthorized', code: 'UNAUTHORIZED' },
+      { status: 401 },
+    );
+  }
+
   const body: unknown = await req.json();
   const parsed = RequestSchema.safeParse(body);
 
@@ -38,12 +43,10 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const supabase = createAdminClient();
     const { data, error } = await supabase.rpc('find_relationship_paths', {
       p_from_id:   from_id,
       p_to_id:     to_id,
       p_max_depth: 3,
-      p_user_id:   HARDCODED_UID,  // Sprint 0: admin client has no session → auth.uid() = NULL
     });
 
     if (error) throw error;

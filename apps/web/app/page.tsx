@@ -1,7 +1,4 @@
-import { createAdminClient } from '@knoty/api-client';
-
-// ─── Sprint 0 hardcoded user ─────────────────────────────────────────────────
-const HARDCODED_UID = 'd52cc5d3-f761-43aa-8575-8dd2cf60fe99';
+import { createRouteClient, getAuthUser } from '@/lib/supabase-server';
 
 // ─── 圈子樣式 mapping ────────────────────────────────────────────────────────
 const CIRCLE_STYLES: Record<string, {
@@ -55,13 +52,15 @@ function ImpactBadge({ impact }: { impact: number }) {
 
 // ─── Page ───────────────────────────────────────────────────────────────────
 export default async function HomePage() {
-  const supabase = createAdminClient();
+  const supabase = await createRouteClient();
+  const user = await getAuthUser(supabase);
+  if (!user) return null; // middleware handles redirect, this is a fallback
 
   // Task 2: Aggregate circles from persons
   const { data: persons } = await supabase
     .from('persons')
     .select('circles')
-    .eq('user_id', HARDCODED_UID);
+    .eq('user_id', user.id);
 
   const circleCountMap = new Map<string, number>();
   for (const p of persons ?? []) {
@@ -74,7 +73,7 @@ export default async function HomePage() {
   const { data: events } = await supabase
     .from('events')
     .select('id, event_type, description, impact, occurred_at, involved_persons')
-    .eq('user_id', HARDCODED_UID)
+    .eq('user_id', user.id)
     .order('occurred_at', { ascending: false })
     .limit(5);
 

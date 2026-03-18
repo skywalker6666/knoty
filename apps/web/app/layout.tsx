@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Geist } from 'next/font/google';
-import BottomTabBar from '@/components/bottom-tab-bar';
+import ConditionalTabBar from '@/components/conditional-tab-bar';
 import './globals.css';
 
 const geist = Geist({ variable: '--font-geist', subsets: ['latin'] });
@@ -27,7 +27,7 @@ export default function RootLayout({
         <div className="mx-auto max-w-md min-h-screen flex flex-col">
           {children}
         </div>
-        <BottomTabBar />
+        <ConditionalTabBar />
       </body>
     </html>
   );

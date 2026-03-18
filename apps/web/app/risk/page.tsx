@@ -1,14 +1,15 @@
-import { createAdminClient } from '@knoty/api-client';
+import { createRouteClient, getAuthUser } from '@/lib/supabase-server';
 import { RiskAnalyzer } from '@/components/risk-analyzer';
 
-const HARDCODED_UID = 'd52cc5d3-f761-43aa-8575-8dd2cf60fe99';
-
 export default async function RiskPage() {
-  const supabase = createAdminClient();
+  const supabase = await createRouteClient();
+  const user = await getAuthUser(supabase);
+  if (!user) return null; // middleware handles redirect, this is a fallback
+
   const { data: persons } = await supabase
     .from('persons')
     .select('id, display_name, avatar_emoji')
-    .eq('user_id', HARDCODED_UID)
+    .eq('user_id', user.id)
     .order('display_name');
 
   return (

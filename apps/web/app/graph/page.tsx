@@ -1,24 +1,23 @@
 // apps/web/app/graph/page.tsx
-import { createAdminClient } from '@knoty/api-client';
 import type { GraphNode, GraphEdge } from '@knoty/shared';
 import { GraphCanvas } from '@/components/graph/GraphCanvas';
-
-// Sprint 0 placeholder — replace with createServerClient() + session in Sprint 1
-const HARDCODED_UID = 'd52cc5d3-f761-43aa-8575-8dd2cf60fe99';
+import { createRouteClient, getAuthUser } from '@/lib/supabase-server';
 
 export default async function GraphPage() {
-  const supabase = createAdminClient();
+  const supabase = await createRouteClient();
+  const user = await getAuthUser(supabase);
+  if (!user) return null; // middleware handles redirect, this is a fallback
 
   try {
     const [personsResult, relationshipsResult] = await Promise.all([
       supabase
         .from('persons')
         .select('id, display_name, avatar_emoji, circles, tags')
-        .eq('user_id', HARDCODED_UID),
+        .eq('user_id', user.id),
       supabase
         .from('relationships')
         .select('id, person_a, person_b, closeness, label, direction, context')
-        .eq('user_id', HARDCODED_UID),
+        .eq('user_id', user.id),
     ]);
 
     if (personsResult.error) throw personsResult.error;
@@ -46,14 +45,14 @@ export default async function GraphPage() {
 
     // Inject synthetic "me" node as the ego centre
     const meNode: GraphNode = {
-      id: HARDCODED_UID,
+      id: user.id,
       displayName: '我',
       avatarEmoji: '🧑',
       circles: [],
       tags: [],
     };
     // Prepend only if not already in the DB (in case user saved themselves)
-    if (!nodes.some(n => n.id === HARDCODED_UID)) {
+    if (!nodes.some(n => n.id === user.id)) {
       nodes.unshift(meNode);
     }
 
@@ -62,7 +61,7 @@ export default async function GraphPage() {
         <GraphCanvas
           nodes={nodes}
           edges={edges}
-          currentUserId={HARDCODED_UID}
+          currentUserId={user.id}
         />
       </main>
     );
@@ -70,7 +69,7 @@ export default async function GraphPage() {
     console.error('[GraphPage] fetch error:', err);
     return (
       <main className="flex-1 flex flex-col h-[calc(100vh-4rem)] pb-20">
-        <GraphCanvas nodes={[]} edges={[]} currentUserId={HARDCODED_UID} />
+        <GraphCanvas nodes={[]} edges={[]} currentUserId={user.id} />
       </main>
     );
   }
